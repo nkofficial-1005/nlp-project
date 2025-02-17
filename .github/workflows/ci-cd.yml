@@ -84,3 +84,25 @@ jobs:
           git checkout main
           git merge --no-ff origin/develop
           git push origin main
+
+  sync-develop:
+    needs: merge-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git authentication
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Sync Develop with Main
+        run: |
+          git fetch origin
+          git checkout develop
+          git merge --no-ff origin/main
+          git push origin develop
