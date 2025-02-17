@@ -6,7 +6,7 @@ from datasets import load_dataset, load_metric
 # Load dataset
 dataset = load_dataset("conll2003")
 
-# Load tokenizer
+# Load tokenizer and model checkpoint
 model_checkpoint = "dbmdz/bert-large-cased-finetuned-conll03-english"
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
@@ -17,7 +17,7 @@ def tokenize_and_align_labels(examples):
 
 tokenized_datasets = dataset.map(tokenize_and_align_labels, batched=True)
 
-# Load model
+# Load model for token classification (with specified number of labels)
 model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=9)
 
 # Training arguments
@@ -37,9 +37,10 @@ metric = load_metric("seqeval")
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred
-    return metric.compute(predictions=predictions.argmax(-1), references=labels)
+    predictions = predictions.argmax(-1)
+    return metric.compute(predictions=predictions, references=labels)
 
-# Trainer
+# Initialize Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
@@ -52,10 +53,15 @@ trainer = Trainer(
 # Train model
 trainer.train()
 
-# Ensure directory exists before saving
+# Ensure the output directory exists
 output_dir = "./models/ner_model"
 os.makedirs(output_dir, exist_ok=True)
 
-# Save model
-trainer.save_model(output_dir)
+# Make sure the model config has a model_type key.
+# Since we started with a BERT checkpoint, we set it to "bert".
+if not hasattr(model.config, "model_type") or not model.config.model_type:
+    model.config.model_type = "bert"
+
+# Save the trained model and tokenizer
+model.save_pretrained(output_dir)
 tokenizer.save_pretrained(output_dir)
