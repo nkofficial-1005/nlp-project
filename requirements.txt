@@ -1,0 +1,7 @@
+transformers
+datasets
+torch
+seqeval
+gradio
+fastapi
+uvicorn
