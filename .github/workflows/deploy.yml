@@ -1,4 +1,4 @@
-name: Deploy to Hugging Face
+name: Deploy to Hugging Face Spaces
 
 on:
   push:
@@ -10,19 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.9'
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
 
-      - name: Push to Hugging Face
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git config --global user.email "nikita.datascience@gmail.com"
-          git config --global user.name "nkofficial-1005"
-          git remote add hf https://kohlin:$HF_TOKEN@huggingface.co/spaces/kohlin/nlp-project
-          git push hf main
+    - name: Install Hugging Face CLI
+      run: |
+        pip install huggingface_hub
+        mkdir -p ~/.huggingface
+        echo ${{ secrets.HF_TOKEN }} > ~/.huggingface/token
+        huggingface-cli login --token ${{ secrets.HF_TOKEN }}
+
+    - name: Configure Git for Hugging Face
+      run: |
+        git config --global user.name "nkofficial-1005"
+        git config --global user.email "nikita.datascience@gmail.com"
+        git remote add hf https://huggingface.co/spaces/kohlin/nlp-project || true
+        git remote set-url hf https://kohlin:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/kohlin/nlp-project
+
+    - name: Set up Git LFS (if needed)
+      run: |
+        git lfs install
+        git lfs pull hf main || true
+
+    - name: Pull latest changes from Hugging Face (merge histories)
+      run: |
+        git pull hf main --allow-unrelated-histories --no-rebase || true
+
+    - name: Push latest code to Hugging Face
+      run: |
+        git push hf main --force-with-lease
+      env:
+        HUGGINGFACE_TOKEN: ${{ secrets.HF_TOKEN }}
