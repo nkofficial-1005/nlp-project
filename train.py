@@ -1,3 +1,4 @@
+import os
 import torch
 from transformers import AutoTokenizer, AutoModelForTokenClassification, TrainingArguments, Trainer
 from datasets import load_dataset, load_metric
@@ -21,7 +22,7 @@ model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_la
 
 # Training arguments
 training_args = TrainingArguments(
-    output_dir="./ner_model",
+    output_dir="./models/ner_model",
     evaluation_strategy="epoch",
     save_strategy="epoch",
     learning_rate=2e-5,
@@ -51,6 +52,10 @@ trainer = Trainer(
 # Train model
 trainer.train()
 
+# Ensure directory exists before saving
+output_dir = "./models/ner_model"
+os.makedirs(output_dir, exist_ok=True)
+
 # Save model
-trainer.save_model("./ner_model")
-tokenizer.save_pretrained("./ner_model")
+trainer.save_model(output_dir)
+tokenizer.save_pretrained(output_dir)

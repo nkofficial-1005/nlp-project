@@ -85,7 +85,7 @@ jobs:
           git merge --no-ff origin/develop
           git push origin main
 
-  sync-develop:
+  finalize-deployment:
     needs: merge-to-main
     runs-on: ubuntu-latest
     steps:
