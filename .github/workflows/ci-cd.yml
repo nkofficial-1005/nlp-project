@@ -65,7 +65,7 @@ jobs:
   merge-to-main:
     needs: merge-to-develop
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: success()
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
